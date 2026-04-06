@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1A6FB5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AktifSogutma">
+<title>AKTİF SOĞUTMA – Hesaplama</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#DCE6F0;--surface:#EDF2F7;--card:#F4F7FA;--card2:#E8EFF6;
+  --border:#B8CDE0;--border2:#9AB8D4;
+  --accent:#1A6FB5;--accent-lt:#D6E8F7;--accent-tx:#0C447C;
+  --success:#1D9E75;--success-lt:#CCF0E3;--success-tx:#085041;
+  --amber:#BA7517;--amber-lt:#FAE8C0;--amber-tx:#633806;
+  --danger:#A32D2D;--muted:#5A7490;--text:#152332;--text2:#2C4A62;
+  --r:14px;--rsm:10px;--rxs:8px;
+  --header-h:64px;--footer-h:52px;--stepbar-h:80px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text)}
+
+/* ── KABUK ── */
+#shell{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#header{background:var(--surface);border-bottom:1.5px solid var(--border);height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+#accent-bar{height:3px;background:var(--accent);flex-shrink:0}
+#stepbar{background:var(--surface);border-bottom:1px solid var(--border);height:var(--stepbar-h);display:flex;align-items:center;padding:0 12px;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:16px;background:var(--bg);-webkit-overflow-scrolling:touch}
+#navrow{background:var(--surface);border-top:1.5px solid var(--border);height:var(--footer-h);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:8px;flex-shrink:0}
+#footer{background:var(--surface);border-top:1px solid var(--border);text-align:center;padding:6px;font-size:11px;font-weight:700;color:var(--accent-tx);flex-shrink:0;letter-spacing:.06em}
+
+/* ── HEADER ── */
+.logo-icon{width:40px;height:40px;background:var(--accent-lt);border-radius:10px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.logo-title{font-size:15px;font-weight:700;color:var(--accent-tx)}
+.logo-sub{font-size:11px;color:var(--muted)}
+
+/* ── STEP BAR ── */
+.step-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;cursor:default}
+.step-item.clickable{cursor:pointer}
+.step-item:not(:last-child)::after{content:'';position:absolute;top:16px;left:calc(50% + 18px);right:calc(-50% + 18px);height:2px;background:var(--border);z-index:0}
+.step-item.done:not(:last-child)::after,.step-item.active:not(:last-child)::after{background:var(--accent)}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--border);background:var(--bg);color:var(--muted);z-index:1;transition:all .2s}
+.step-item.active .step-circle{background:var(--accent);border-color:var(--accent);color:#fff}
+.step-item.done .step-circle{background:var(--success);border-color:var(--success);color:#fff}
+.step-label{font-size:9px;font-weight:700;color:var(--muted);text-align:center;letter-spacing:.02em;line-height:1.2}
+.step-item.active .step-label{color:var(--accent-tx)}
+.step-item.done .step-label{color:var(--success-tx)}
+
+/* ── KARTLAR ── */
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.card-head{padding:10px 14px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-head-title{font-size:12px;font-weight:700;color:var(--accent-tx);letter-spacing:.04em}
+.card-body{padding:14px}
+
+/* ── ALANLAR ── */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;font-weight:700;color:var(--muted)}
+.input-wrap{display:flex;border:1.5px solid var(--border);border-radius:var(--rxs);overflow:hidden;background:#fff;transition:border-color .15s}
+.input-wrap:focus-within{border-color:var(--accent)}
+.input-wrap input{flex:1;border:none;outline:none;font-size:16px;padding:11px 12px;color:var(--text);background:transparent;font-family:inherit;min-width:0}
+.input-unit{background:var(--accent-lt);color:var(--accent-tx);font-size:12px;font-weight:700;padding:0 10px;display:flex;align-items:center;border-left:1.5px solid var(--border2);white-space:nowrap}
+.field-hint{font-size:11px;color:var(--muted)}
+.field-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ── BUTONLAR ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text2);font-family:inherit;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;min-height:44px}
+.btn:active{opacity:.8;transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.success{background:var(--success);border-color:var(--success);color:#fff}
+.btn.danger{color:var(--danger);border-color:#D4A0A0;background:var(--card)}
+.btn.sm{padding:8px 12px;font-size:12px;min-height:36px}
+.btn-group{display:flex;gap:6px;align-items:center}
+
+/* ── FIRMA EKRANI ── */
+.firm-center{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - var(--header-h) - var(--footer-h) - 3px - 40px);min-height:calc(100dvh - var(--header-h) - var(--footer-h) - 3px - 40px)}
+.firm-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);width:100%;max-width:480px;overflow:hidden}
+.firm-card-head{padding:14px 18px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--accent-tx)}
+.firm-card-body{padding:20px 18px}
+.firm-badge{background:var(--accent-lt);border:1px solid var(--border2);border-radius:var(--rxs);padding:8px 12px;font-size:13px;font-weight:700;color:var(--accent-tx);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ── ÜRÜN KARTLARI ── */
+.product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:400px){.product-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:401px) and (max-width:600px){.product-grid{grid-template-columns:repeat(4,1fr)}}
+.product-card{background:var(--card2);border:2px solid var(--border);border-radius:var(--rsm);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:center}
+.product-card:active{transform:scale(.95)}
+.product-card.selected{background:var(--accent);border-color:var(--accent)}
+.product-card .p-icon{font-size:24px;line-height:1}
+.product-card .p-name{font-size:10px;font-weight:700;color:var(--text2);line-height:1.2}
+.product-card.selected .p-name{color:#fff}
+.product-card .p-info{font-size:9px;color:var(--muted);line-height:1.2}
+.product-card.selected .p-info{color:rgba(255,255,255,.8)}
+
+/* ── SONUÇ KPI ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;text-align:center}
+.kpi-top{height:4px}
+.kpi-inner{padding:12px 8px}
+.kpi-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:5px}
+.kpi-value{font-size:18px;font-weight:700;margin-bottom:2px}
+.kpi-sub{font-size:9px;color:var(--muted)}
+
+/* ── DETAY TABLO ── */
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-row:nth-child(even){background:var(--card2)}
+.detail-key{color:var(--muted);font-weight:500;flex:1}
+.detail-val{font-weight:700;color:var(--text);text-align:right;margin-left:8px}
+
+/* ── BİLGİ KUTUSU ── */
+.info-box{background:var(--accent-lt);border:1px solid var(--border2);border-radius:var(--rxs);padding:10px 12px;font-size:12px;color:var(--accent-tx);line-height:1.6;margin-bottom:12px}
+
+/* ── PAGE TITLE ── */
+.page-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+
+/* ── HATA ── */
+.input-wrap.error{border-color:var(--danger)}
+.err-msg{font-size:11px;color:var(--danger);margin-top:3px;display:none}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="header">
+    <div class="logo-icon">❄</div>
+    <div>
+      <div class="logo-title">SOĞUK HAVA DEPOSU</div>
+      <div class="logo-sub">Soğutma Sistemi Hesaplama</div>
+    </div>
+  </div>
+  <div id="accent-bar"></div>
+  <div id="stepbar" style="display:none"></div>
+  <div id="content"></div>
+  <div id="navrow"></div>
+  <div id="footer">AKTİF SOĞUTMA &nbsp;·&nbsp; © 2026 – Tüm Hakları Saklıdır</div>
+</div>
+
+<script>
+// ── VERİ ──────────────────────────────────────────────────────────────────────
+const PRODUCTS=[
+  {name:"Et (Sığır)",icon:"🥩",c1:3.52,c2:1.68,L:249,tf:-1.7},
+  {name:"Tavuk",icon:"🍗",c1:3.35,c2:1.55,L:247,tf:-2.8},
+  {name:"Balık",icon:"🐟",c1:3.76,c2:2.05,L:276,tf:-2.2},
+  {name:"Sebze",icon:"🥦",c1:3.90,c2:1.95,L:301,tf:-1.5},
+  {name:"Meyve",icon:"🍎",c1:3.73,c2:1.88,L:292,tf:-1.8},
+  {name:"Süt Ürünleri",icon:"🧀",c1:3.89,c2:2.00,L:289,tf:-0.5},
+  {name:"Su / Buz",icon:"💧",c1:4.18,c2:2.09,L:334,tf:0.0},
+  {name:"Manuel Giriş",icon:"✏️",c1:null,c2:null,L:null,tf:null},
+];
+const STEPS=[
+  {title:"GEOMETRİ",sub:"Boyutlar & Yalıtım"},
+  {title:"ORTAM",sub:"Sıcaklık Verileri"},
+  {title:"ÜRÜN",sub:"Termodinamik"},
+  {title:"OPERASYON",sub:"Parametreler"},
+];
+
+let step=-1, data={}, results=null, firmName='', selectedProduct=null;
+
+// ── HESAPLAMA ─────────────────────────────────────────────────────────────────
+function calculate(d){
+  const W=d.width,L=d.length,H=d.height;
+  const floor=W*L;
+  const area=2*((W*L)+(W*H)+(L*H));
+  const volume=W*L*H;
+  const Q_panel=(area*(d.temp_out-d.temp_in)*d.lambda)/(d.panel_thickness/100);
+  const Q1=d.product_mass*d.cp_before*(d.temp_entry-d.temp_freeze);
+  const Q_lat=d.product_mass*d.latent_heat;
+  const Q2=d.product_mass*d.cp_after*(d.temp_freeze-d.temp_in);
+  const Q_total=Q1+Q_lat+Q2;
+  const W_prod=(Q_total*1000)/(d.target_hours*3600);
+  const W_net=(W_prod+Q_panel)*(1+d.safety_factor/100);
+  const kW=W_net/1000;
+  return {floor,area,volume,Q_panel,Q1,Q_lat,Q2,Q_total,W_prod,W_net,kW,
+          hp:kW/0.7457,daily_energy:kW*d.daily_hours};
+}
+
+// ── STEP BAR ──────────────────────────────────────────────────────────────────
+function buildStepbar(){
+  const sb=document.getElementById('stepbar');
+  if(step<0){sb.style.display='none';return;}
+  sb.style.display='flex';
+  sb.innerHTML=STEPS.map((s,i)=>{
+    const done=i<step,active=i===step;
+    const cls=done?'done':active?'active':'';
+    const clickable=done||active;
+    return `<div class="step-item ${cls}${clickable?' clickable':''}" ${clickable?`onclick="goStep(${i})"`:''}">
+      <div class="step-circle">${done?'✓':(i+1)}</div>
+      <div class="step-label">${s.title}</div>
+    </div>`;
+  }).join('');
+}
+
+function goStep(i){if(i<=step) showStep(i);}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function setNav(leftHtml,rightHtml){
+  document.getElementById('navrow').innerHTML=
+    `<div class="btn-group">${leftHtml}</div><div class="btn-group">${rightHtml}</div>`;
+}
+
+// ── ALAN YARDIMCILARI ─────────────────────────────────────────────────────────
+function fld(id,label,unit,hint,val,type='number'){
+  val=data[id]!==undefined?data[id]:(val||'');
+  return `<div class="field">
+    <label>${label}</label>
+    <div class="input-wrap" id="w_${id}">
+      <input type="${type}" id="${id}" value="${val}" placeholder="—"
+        inputmode="${type==='number'?'decimal':'text'}"
+        ${type==='number'?'step="any"':''}>
+      ${unit?`<div class="input-unit">${unit}</div>`:''}
+    </div>
+    ${hint?`<div class="field-hint">${hint}</div>`:''}
+  </div>`;
+}
+
+function readFields(keys){
+  let ok=true;
+  keys.forEach(k=>{
+    const el=document.getElementById(k);
+    if(!el)return;
+    const v=parseFloat(el.value);
+    const w=document.getElementById('w_'+k);
+    if(isNaN(v)){
+      ok=false;
+      if(w)w.classList.add('error');
+    } else {
+      data[k]=v;
+      if(w)w.classList.remove('error');
+    }
+  });
+  return ok;
+}
+
+function firmBadge(){
+  return `<div class="firm-badge"><span>🏢</span><span>${firmName}</span></div>`;
+}
+
+function showStep(i){step=i;buildStepbar();
+  [renderGeometry,renderAmbient,renderProduct,renderOps][i]();}
+
+// ── EKRAN 0: FİRMA ────────────────────────────────────────────────────────────
+function renderFirmEntry(){
+  step=-1;buildStepbar();
+  document.getElementById('content').innerHTML=`
+    <div class="firm-center">
+      <div class="firm-card">
+        <div class="firm-card-head"><span>🏢</span> İŞLETME BİLGİSİ</div>
+        <div class="firm-card-body">
+          <div class="field">
+            <label>İşletme / Müşteri Adı</label>
+            <div class="input-wrap" id="w_firm">
+              <input type="text" id="firm_input" value="${firmName}"
+                placeholder="Örn: KARADENIZ GIDA A.Ş."
+                oninput="this.value=this.value.toUpperCase()"
+                style="font-size:16px;font-weight:700">
+            </div>
+            <div class="field-hint">Büyük harfe otomatik çevrilir · PDF raporuna aktarılır</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  setNav('',`<button class="btn primary" onclick="goFirm()">Hesaplamaya Başla →</button>`);
+  setTimeout(()=>document.getElementById('firm_input')?.focus(),100);
+}
+
+function goFirm(){
+  const v=document.getElementById('firm_input').value.trim().toUpperCase();
+  const w=document.getElementById('w_firm');
+  if(!v){w.classList.add('error');return;}
+  w.classList.remove('error');
+  firmName=v; showStep(0);
+}
+
+// ── EKRAN 1: GEOMETRİ ─────────────────────────────────────────────────────────
+function renderGeometry(){
+  document.getElementById('content').innerHTML=`
+    ${firmBadge()}
+    <div class="page-title">Depo Geometrisi ve Yalıtım</div>
+    <div class="page-sub">İç boyutları ve panel özelliklerini girin.</div>
+    <div class="card">
+      <div class="card-head"><span>📐</span><span class="card-head-title">BOYUTLAR</span></div>
+      <div class="card-body">
+        <div class="field-grid-3">
+          ${fld('width','Eni','m','')}
+          ${fld('length','Boyu','m','')}
+          ${fld('height','Yüksekliği','m','')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>🧱</span><span class="card-head-title">PANEL ÖZELLİKLERİ</span></div>
+      <div class="card-body">
+        <div class="field-grid-3">
+          ${fld('panel_thickness','Kalınlık','cm','8/10/12')}
+          ${fld('lambda','λ İletkenlik','W/mK','0.022–0.024')}
+          ${fld('density','Yoğunluk','kg/m³','40–43')}
+        </div>
+      </div>
+    </div>`;
+  setNav(
+    `<button class="btn" onclick="renderFirmEntry()">← İşletme</button>
+     <button class="btn danger sm" onclick="clearFields(['width','length','height','panel_thickness','lambda','density'])">Temizle</button>`,
+    `<button class="btn primary" onclick="if(readFields(['width','length','height','panel_thickness','lambda','density']))showStep(1)">Devam →</button>`
+  );
+}
+
+// ── EKRAN 2: ORTAM ────────────────────────────────────────────────────────────
+function renderAmbient(){
+  document.getElementById('content').innerHTML=`
+    ${firmBadge()}
+    <div class="page-title">Ortam Şartları</div>
+    <div class="page-sub">Sıcaklık değerlerini girin.</div>
+    <div class="card">
+      <div class="card-head"><span>🌡</span><span class="card-head-title">SICAKLIK DEĞERLERİ</span></div>
+      <div class="card-body">
+        <div class="field-grid-2">
+          ${fld('temp_out','Dış Ortam Sıcaklığı','°C','Örn: 40')}
+          ${fld('temp_in','Hedef Oda Sıcaklığı','°C','Örn: -25')}
+        </div>
+      </div>
+    </div>
+    <div class="info-box">Sıcaklık farkı (ΔT) ne kadar büyükse soğutma yükü de o kadar artar. Türkiye iklimi için genellikle 35–45 °C alınır.</div>`;
+  setNav(
+    `<button class="btn" onclick="showStep(0)">← Geri</button>
+     <button class="btn danger sm" onclick="clearFields(['temp_out','temp_in'])">Temizle</button>`,
+    `<button class="btn primary" onclick="if(readFields(['temp_out','temp_in']))showStep(2)">Devam →</button>`
+  );
+}
+
+// ── EKRAN 3: ÜRÜN ─────────────────────────────────────────────────────────────
+function renderProduct(){
+  document.getElementById('content').innerHTML=`
+    ${firmBadge()}
+    <div class="page-title">Ürün Termodinamik Verileri</div>
+    <div class="page-sub">Ürün seçin veya manuel girin.</div>
+    <div class="card">
+      <div class="card-head"><span>📦</span><span class="card-head-title">ÜRÜN KÜTÜPHANESİ</span></div>
+      <div class="card-body">
+        <div class="product-grid">
+          ${PRODUCTS.map((p,i)=>`
+            <div class="product-card${selectedProduct===i?' selected':''}" onclick="applyProduct(${i})" id="pc_${i}">
+              <div class="p-icon">${p.icon}</div>
+              <div class="p-name">${p.name}</div>
+              ${p.c1?`<div class="p-info">L=${p.L}</div>`:`<div class="p-info">Manuel</div>`}
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>⚗</span><span class="card-head-title">TERMODİNAMİK DEĞERLER</span></div>
+      <div class="card-body">
+        <div class="field-grid-3" style="margin-bottom:10px">
+          ${fld('product_mass','Miktar','kg','')}
+          ${fld('temp_entry','Giriş Sıc.','°C','')}
+          ${fld('temp_freeze','Donma Nokt.','°C','')}
+        </div>
+        <div class="field-grid-3">
+          ${fld('cp_before','Özgül Isı c₁','kJ/kg·K','')}
+          ${fld('cp_after','Özgül Isı c₂','kJ/kg·K','')}
+          ${fld('latent_heat','Gizli Isı L','kJ/kg','')}
+        </div>
+      </div>
+    </div>`;
+  setNav(
+    `<button class="btn" onclick="showStep(1)">← Geri</button>
+     <button class="btn danger sm" onclick="clearProd()">Temizle</button>`,
+    `<button class="btn primary" onclick="if(readFields(['product_mass','temp_entry','temp_freeze','cp_before','cp_after','latent_heat']))showStep(3)">Devam →</button>`
+  );
+}
+
+function applyProduct(i){
+  selectedProduct=i;
+  document.querySelectorAll('.product-card').forEach((c,j)=>c.classList.toggle('selected',j===i));
+  const p=PRODUCTS[i];
+  if(p.c1!==null){
+    [['cp_before',p.c1],['cp_after',p.c2],['latent_heat',p.L],['temp_freeze',p.tf]]
+      .forEach(([k,v])=>{const e=document.getElementById(k);if(e)e.value=v;});
+  }
+}
+function clearProd(){
+  selectedProduct=null;
+  document.querySelectorAll('.product-card').forEach(c=>c.classList.remove('selected'));
+  ['product_mass','temp_entry','temp_freeze','cp_before','cp_after','latent_heat']
+    .forEach(k=>{const e=document.getElementById(k);if(e)e.value='';});
+}
+
+// ── EKRAN 4: OPERASYON ────────────────────────────────────────────────────────
+function renderOps(){
+  document.getElementById('content').innerHTML=`
+    ${firmBadge()}
+    <div class="page-title">Operasyonel Parametreler</div>
+    <div class="page-sub">Sistem çalışma koşullarını belirleyin.</div>
+    <div class="card">
+      <div class="card-head"><span>⚙</span><span class="card-head-title">SİSTEM PARAMETRELERİ</span></div>
+      <div class="card-body">
+        <div class="field-grid-3">
+          ${fld('target_hours','Hedef Süre','saat','','8')}
+          ${fld('safety_factor','Emniyet','%','15–20','15')}
+          ${fld('daily_hours','Çalışma','saat/gün','','18')}
+        </div>
+      </div>
+    </div>`;
+  setNav(
+    `<button class="btn" onclick="showStep(2)">← Geri</button>
+     <button class="btn danger sm" onclick="clearFields(['target_hours','safety_factor','daily_hours'])">Temizle</button>`,
+    `<button class="btn primary" onclick="doCalc()">Hesapla ▶</button>`
+  );
+}
+
+function doCalc(){
+  if(!readFields(['target_hours','safety_factor','daily_hours']))return;
+  try{results=calculate(data);}
+  catch(e){alert('Hesaplama hatası: '+e.message);return;}
+  showResults();
+}
+
+// ── SONUÇLAR ──────────────────────────────────────────────────────────────────
+function showResults(){
+  step=4;buildStepbar();
+  const r=results;
+  const now=new Date().toLocaleString('tr-TR');
+  document.getElementById('content').innerHTML=`
+    ${firmBadge()}
+    <div class="page-title">Hesaplama Sonuçları</div>
+    <div class="page-sub">${now}</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#1A6FB5"></div>
+        <div class="kpi-inner">
+          <div class="kpi-label">SOĞUTMA</div>
+          <div class="kpi-value" style="color:#0C447C">${r.kW.toFixed(2)}<span style="font-size:12px"> kW</span></div>
+          <div class="kpi-sub">${Math.round(r.W_net)} W</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#1D9E75"></div>
+        <div class="kpi-inner">
+          <div class="kpi-label">KOMPRESÖR</div>
+          <div class="kpi-value" style="color:#085041">${r.hp.toFixed(1)}<span style="font-size:12px"> HP</span></div>
+          <div class="kpi-sub">Beygir gücü</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#BA7517"></div>
+        <div class="kpi-inner">
+          <div class="kpi-label">ENERJİ</div>
+          <div class="kpi-value" style="color:#633806">${r.daily_energy.toFixed(1)}<span style="font-size:12px"> kWh</span></div>
+          <div class="kpi-sub">Günlük</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>📊</span><span class="card-head-title">HESAPLAMA DETAYLARI</span></div>
+      <div>
+        ${[
+          ['Taban Alanı (En × Boy)', r.floor.toFixed(2)+' m²'],
+          ['Toplam Panel Alanı', r.area.toFixed(2)+' m²'],
+          ['Hacim', r.volume.toFixed(2)+' m³'],
+          ['Panel Isı Sızıntısı', r.Q_panel.toFixed(1)+' W'],
+          ['Donma Öncesi Q₁', r.Q1.toFixed(1)+' kJ'],
+          ['Gizli Isı', r.Q_lat.toFixed(1)+' kJ'],
+          ['Donma Sonrası Q₂', r.Q2.toFixed(1)+' kJ'],
+          ['Toplam Ürün Enerjisi', r.Q_total.toFixed(1)+' kJ'],
+          ['Anlık Ürün Gücü', r.W_prod.toFixed(1)+' W'],
+          ['Net Kapasite', r.W_net.toFixed(1)+' W = '+r.kW.toFixed(3)+' kW'],
+        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+    </div>`;
+  setNav(
+    `<div class="btn-group">
+      <button class="btn" onclick="renderFirmEntry()">🔄 Yeni</button>
+      <button class="btn" onclick="showStep(3)">← Düzenle</button>
+    </div>`,
+    `<button class="btn success" onclick="generatePDF()">📄 PDF</button>`
+  );
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+function generatePDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, margin=15, cw=W-2*margin;
+  const r=results, d=data;
+  const now=new Date().toLocaleString('tr-TR');
+  let y=0;
+
+  function rect(x,yy,w,h,fill){doc.setFillColor(...fill);doc.rect(x,yy,w,h,'F');}
+  function text(txt,x,yy,opts={}){
+    doc.setFontSize(opts.size||10);
+    doc.setFont('helvetica',opts.bold?'bold':'normal');
+    doc.setTextColor(...(opts.color||[21,35,50]));
+    doc.text(String(txt),x,yy,{align:opts.align||'left'});
+  }
+
+  // Başlık şeridi
+  rect(0,0,W,22,[26,111,181]);
+  text('AKTİF SOĞUTMA – Hesaplama Raporu',W/2,9,{size:14,bold:true,color:[255,255,255],align:'center'});
+  text('Soğuk Hava Deposu Soğutma Sistemi',W/2,16,{size:9,color:[180,215,245],align:'center'});
+  y=22;
+
+  // Meta şerit
+  rect(0,y,W,10,[214,232,247]);
+  text('🏢  '+firmName,margin,y+7,{size:10,bold:true,color:[12,68,124]});
+  text(now,W-margin,y+7,{size:9,color:[26,111,181],align:'right'});
+  y+=10;
+
+  // Bölüm başlığı
+  function sectionTitle(title){
+    y+=6;
+    doc.setDrawColor(26,111,181);
+    doc.setLineWidth(0.4);
+    doc.line(margin,y,W-margin,y);
+    y+=1;
+    text(title,margin,y+5,{size:11,bold:true,color:[12,68,124]});
+    y+=8;
+  }
+
+  // KV tablo
+  function kvTable(rows){
+    rows.forEach(([k,v],i)=>{
+      const bg=i%2===0?[244,247,250]:[237,242,247];
+      rect(margin,y,cw,7,bg);
+      text(k,margin+3,y+5,{size:9,color:[90,116,144]});
+      text(v,W-margin-3,y+5,{size:9,bold:true,align:'right'});
+      y+=7;
+    });
+    y+=4;
+  }
+
+  // KPI kutuları
+  function kpiRow(items){
+    const bw=cw/3;
+    items.forEach(([label,val,sub,accent,lt,dark],i)=>{
+      const x=margin+i*bw;
+      const ac=accent.map(v=>parseInt(v));
+      const ltc=lt.map(v=>parseInt(v));
+      const dc=dark.map(v=>parseInt(v));
+      rect(x,y,bw-2,5,ac);
+      rect(x,y+5,bw-2,18,ltc);
+      text(label,x+(bw-2)/2,y+3,{size:7,bold:true,color:[255,255,255],align:'center'});
+      text(val,x+(bw-2)/2,y+15,{size:16,bold:true,color:dc,align:'center'});
+      text(sub,x+(bw-2)/2,y+21,{size:7,color:ac,align:'center'});
+    });
+    y+=28;
+  }
+
+  // 1. Giriş değerleri
+  sectionTitle('1.  Giriş Değerleri');
+  text('Depo Geometrisi ve Yalıtım',margin,y,{size:10,bold:true,color:[44,74,98]});y+=5;
+  kvTable([
+    ['Depo Eni',d.width+' m'],['Depo Boyu',d.length+' m'],
+    ['Depo Yüksekliği',d.height+' m'],['Panel Kalınlığı',d.panel_thickness+' cm'],
+    ['Isıl İletkenlik λ',d.lambda+' W/mK'],['Panel Yoğunluğu',d.density+' kg/m³'],
+  ]);
+  text('Ortam Şartları',margin,y,{size:10,bold:true,color:[44,74,98]});y+=5;
+  kvTable([
+    ['Dış Ortam Sıcaklığı',d.temp_out+' °C'],['Hedef Oda Sıcaklığı',d.temp_in+' °C'],
+    ['Sıcaklık Farkı ΔT',(d.temp_out-d.temp_in).toFixed(1)+' °C'],
+  ]);
+  text('Ürün Termodinamik Verileri',margin,y,{size:10,bold:true,color:[44,74,98]});y+=5;
+  kvTable([
+    ['Ürün Miktarı',d.product_mass+' kg'],['Giriş Sıcaklığı',d.temp_entry+' °C'],
+    ['Donma Noktası',d.temp_freeze+' °C'],['Donma Öncesi c₁',d.cp_before+' kJ/kg·K'],
+    ['Donma Sonrası c₂',d.cp_after+' kJ/kg·K'],['Gizli Isı (Latent)',d.latent_heat+' kJ/kg'],
+  ]);
+  text('Operasyonel Parametreler',margin,y,{size:10,bold:true,color:[44,74,98]});y+=5;
+  kvTable([
+    ['Hedef Süre',d.target_hours+' saat'],['Emniyet Katsayısı','% '+d.safety_factor],
+    ['Günlük Çalışma Saati',d.daily_hours+' saat'],
+  ]);
+
+  // Yeni sayfa
+  doc.addPage();y=15;
+
+  // 2. Hesaplama
+  sectionTitle('2.  Hesaplama Detayları');
+  kvTable([
+    ['Taban Alanı (En × Boy)',r.floor.toFixed(2)+' m²'],
+    ['Toplam Panel Alanı (6 Yüzey)',r.area.toFixed(2)+' m²'],
+    ['Hacim',r.volume.toFixed(2)+' m³'],
+    ['Panel Isı Sızıntısı (Q_panel)',r.Q_panel.toFixed(2)+' W'],
+    ['Donma Öncesi Ürün Enerjisi (Q₁)',r.Q1.toFixed(2)+' kJ'],
+    ['Gizli Isı (Q_latent)',r.Q_lat.toFixed(2)+' kJ'],
+    ['Donma Sonrası Ürün Enerjisi (Q₂)',r.Q2.toFixed(2)+' kJ'],
+    ['Toplam Ürün Enerjisi',r.Q_total.toFixed(2)+' kJ'],
+    ['Anlık Ürün Gücü',r.W_prod.toFixed(2)+' W'],
+  ]);
+
+  // 3. Sonuçlar
+  sectionTitle('3.  Hesaplama Sonuçları');
+  kpiRow([
+    ['SOĞUTMA KAPASİTESİ',r.kW.toFixed(2)+' kW',Math.round(r.W_net)+' W',
+     ['26','111','181'],['214','232','247'],['12','68','124']],
+    ['KOMPRESÖR GÜCÜ',r.hp.toFixed(1)+' HP','Beygir gücü',
+     ['29','158','117'],['204','240','227'],['8','80','65']],
+    ['GÜNLÜK ENERJİ',r.daily_energy.toFixed(1)+' kWh','Günlük tüketim',
+     ['186','117','23'],['250','232','192'],['99','56','6']],
+  ]);
+
+  // Açıklama notu
+  rect(margin,y,cw,12,[237,242,247]);
+  text(`Yukarıdaki değerler %${d.safety_factor} emniyet katsayısı dahil net kapasiteyi göstermektedir. Kompresör seçiminde ${r.hp.toFixed(1)} HP ve üzeri bir ünite tercih edilmesi önerilir.`,
+    margin+3,y+5,{size:8,color:[90,116,144]});
+  y+=16;
+
+  // Alt footer şeridi
+  rect(0,y,W,10,[26,111,181]);
+  text('AKTİF SOĞUTMA  ·  Bu rapor otomatik olarak oluşturulmuştur.  ·  © 2026',
+    W/2,y+6,{size:8,color:[180,215,245],align:'center'});
+
+  // Kaydet
+  const safe=firmName.replace(/[^a-zA-Z0-9\s]/g,'').trim().substring(0,20);
+  const ts=new Date().toISOString().slice(0,19).replace(/[:-]/g,'');
+  doc.save(`AktifSogutma_${safe}_${ts}.pdf`);
+}
+
+function clearFields(keys){keys.forEach(k=>{const e=document.getElementById(k);if(e)e.value=''});}
+
+// ── PWA SERVICE WORKER ────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ── BAŞLAT ────────────────────────────────────────────────────────────────────
+renderFirmEntry();
+</script>
+</body>
+</html>
