@@ -1,0 +1,10 @@
+[
+  {"name":"Et (Sığır)","icon":"🥩","cp_before":3.52,"cp_after":1.68,"latent_heat":249,"freeze_point":-1.7},
+  {"name":"Tavuk","icon":"🍗","cp_before":3.35,"cp_after":1.55,"latent_heat":247,"freeze_point":-2.8},
+  {"name":"Balık","icon":"🐟","cp_before":3.76,"cp_after":2.05,"latent_heat":276,"freeze_point":-2.2},
+  {"name":"Sebze","icon":"🥦","cp_before":3.90,"cp_after":1.95,"latent_heat":301,"freeze_point":-1.5},
+  {"name":"Meyve","icon":"🍎","cp_before":3.73,"cp_after":1.88,"latent_heat":292,"freeze_point":-1.8},
+  {"name":"Süt Ürünleri","icon":"🧀","cp_before":3.89,"cp_after":2.00,"latent_heat":289,"freeze_point":-0.5},
+  {"name":"Su / Buz","icon":"💧","cp_before":4.18,"cp_after":2.09,"latent_heat":334,"freeze_point":0.0},
+  {"name":"Manuel Giriş","icon":"✏️","cp_before":null,"cp_after":null,"latent_heat":null,"freeze_point":null}
+]
